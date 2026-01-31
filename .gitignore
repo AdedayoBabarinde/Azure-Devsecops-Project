@@ -43,9 +43,7 @@ ehthumbs.db
 Desktop.ini 
 $RECYCLE.BIN/
 
-app
-.github/workflows/
-*.bak
+# Scripts for environment setup
 
 
 .setup-env.ps1
