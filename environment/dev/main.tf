@@ -34,7 +34,7 @@ module "ACR" {
 
 module "keyvaults" {
   source              = "../../Modules/keyvaults"
-  name                = "nimbus-dev10112"
+  name                = "nimbus-dev10111"
   location            = var.location
   resource_group_name = module.resource_group.name
 }
