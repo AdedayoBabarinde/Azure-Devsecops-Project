@@ -16,7 +16,11 @@
 #   Bash: export ARM_SUBSCRIPTION_ID="your-subscription-id"
 #   Or use: .\setup-env.ps1 (from project root)
 provider "azurerm" {
-  features {}
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
 }
 
 module "resource_group" {
@@ -34,7 +38,7 @@ module "ACR" {
 
 module "keyvaults" {
   source              = "../../Modules/keyvaults"
-  name                = "nimbus-dev10111"
+  name                = "nimbus-eus-dev01"
   location            = var.location
   resource_group_name = module.resource_group.name
 }
@@ -45,6 +49,7 @@ module "AKS" {
   location            = var.location
   resource_group_name = module.resource_group.name
   node_count          = var.node_count
+  vm_size             = var.vm_size
   environment         = var.environment
   owner               = var.owner
   acr_id              = module.ACR.acr_id
