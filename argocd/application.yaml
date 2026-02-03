@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nimbus-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  # Source - Your Git repository
+  source:
+    repoURL: https://github.com/AdedayoBabarinde/Azure-Devsecops-Project.git
+    targetRevision: update-k8s-infra  # Current branch
+    path: k8s  # Path to your Kubernetes manifests
+
+  # Destination - Target AKS cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+
+  # Sync policy
+  syncPolicy:
+    automated:
+      prune: true       # Automatically delete resources that are no longer in Git
+      selfHeal: true    # Automatically sync when cluster state differs from Git
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true  # Automatically create namespace if it doesn't exist
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Ignore differences (optional)
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Ignore replica differences if using HPA
