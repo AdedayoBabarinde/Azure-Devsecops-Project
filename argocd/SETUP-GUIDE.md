@@ -26,8 +26,6 @@ GitOps is a way of managing Kubernetes deployments where:
 ### 1. ArgoCD Installed on AKS ✅
 - **Namespace**: `argocd`
 - **UI Access**: http://20.242.220.204
-- **Username**: `admin`
-- **Password**: `xLr5AgC-hvW6XJvc`
 
 ### 2. Files Created
 ```
@@ -62,15 +60,14 @@ kubectl apply -f argocd/application.yaml
 ### Step 3: Access ArgoCD UI
 
 1. Open browser: http://20.242.220.204
-2. Login: admin / xLr5AgC-hvW6XJvc
+2. Login: 
 3. You should see `nimbus-app` application
 
 ### Step 4: Change Admin Password (Important!)
 
 ```bash
 # Via CLI
-argocd login 20.242.220.204 --username admin --password xLr5AgC-hvW6XJvc --insecure
-argocd account update-password
+argocd login 20.242.220.204 --username admin --password insert password
 
 # Via UI
 # User Info → Update Password

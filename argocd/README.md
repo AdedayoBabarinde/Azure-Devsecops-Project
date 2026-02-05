@@ -6,9 +6,6 @@ This directory contains ArgoCD configuration for GitOps deployment.
 
 **ArgoCD Server URL:** http://20.242.220.204
 
-**Default Credentials:**
-- Username: `admin`
-- Password: `xLr5AgC-hvW6XJvc`
 
 **⚠️ IMPORTANT:** Change the admin password immediately after first login!
 
@@ -40,13 +37,12 @@ chmod +x /usr/local/bin/argocd
 
 **Via CLI:**
 ```bash
-argocd login 20.242.220.204 --username admin --password xLr5AgC-hvW6XJvc --insecure
-argocd account update-password
+argocd login 20.242.220.204 --username admin --password insert password
 ```
 
 **Via Web UI:**
 1. Navigate to http://20.242.220.204
-2. Login with admin/xLr5AgC-hvW6XJvc
+2. Login with credentials
 3. Change password in User Info → Update Password
 
 ### 3. Configure Git Repository
