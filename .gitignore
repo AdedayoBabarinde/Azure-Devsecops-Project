@@ -1,3 +1,10 @@
+
+
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
 terraform.tfstate
 .terraform*
 dist/
@@ -43,9 +50,5 @@ ehthumbs.db
 Desktop.ini 
 $RECYCLE.BIN/
 
-# Scripts for environment setup
-
-
-.setup-env.ps1
-
-.env.example
+#argoCD
+argocd/*.md
