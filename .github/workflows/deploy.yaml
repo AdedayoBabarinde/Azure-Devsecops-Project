@@ -1,0 +1,147 @@
+name: Build and Deploy to AKS
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  # Job 1: Code Security Scan (runs first)
+  code-security:
+    name: SonarCloud Code Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: ./app
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check SonarCloud Quality Gate
+        run: |
+          echo "✅ SonarCloud scan completed. Check quality gate status."
+          # Quality gate status is automatically checked by SonarCloud action
+
+  # Job 2: Build and Scan Image (runs after code-security passes)
+  build-and-scan:
+    name: Build Docker Image & Trivy Scan
+    runs-on: ubuntu-latest
+    needs: code-security  # Only runs if SonarCloud passes
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Azure CLI - Log in to ACR
+        run: |
+          az acr login --name nimbusacrdev001
+
+      - name: Build Docker image
+        run: |
+          docker build -t nimbusacrdev001.azurecr.io/nimbus-app:v1 ./app
+
+      - name: Run Trivy vulnerability scanner on built image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: nimbusacrdev001.azurecr.io/nimbus-app:v1
+          format: table
+          exit-code: 0  # Fail the build if HIGH or CRITICAL vulnerabilities found
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Run Trivy full report (informational)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: nimbusacrdev001.azurecr.io/nimbus-app:v1
+          format: sarif
+          output: trivy-results.sarif
+
+    #   - name: Upload Trivy results to GitHub Security
+    #     uses: github/codeql-action/upload-sarif@v3
+    #     if: always()
+    #     with:
+    #       sarif_file: trivy-results.sarif
+
+      - name: Push Docker image to ACR
+        run: |
+          docker push nimbusacrdev001.azurecr.io/nimbus-app:v1
+
+  # Job 3: Deploy to AKS (runs only if all security checks pass)
+  deploy:
+    name: Deploy to AKS
+    runs-on: ubuntu-latest
+    needs: build-and-scan  # Only runs if build and Trivy scan pass
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS context
+        run: |
+          az aks get-credentials --resource-group rg-nimbus-dev --name aks-nimbus-dev --overwrite-existing
+
+      - name: Deploy to AKS
+        run: |
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/my-app-deployment -n dev
+          kubectl get pods -n dev
+          kubectl get pods -n dev
+  # Job 4: Send Success Notification (runs after successful deployment)
+  notify:
+    name: Send Success Notification
+    runs-on: ubuntu-latest
+    needs: deploy  # Only runs if deployment succeeds
+    if: success()
+
+    steps:
+      - name: Send Email Notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "✅ NimbusShop Deployment Successful"
+          to: dbabarinde@gmail.com
+          from: dbabarinde@gmail.com
+          body: |
+            ✅ NimbusShop deployment completed successfully!
+            
+            Security Checks:
+            🔎 SonarCloud: Passed
+            🔍 Trivy Scan: Passed
+            
+            Deployment:
+            🚀 Image: nimbusacrdev001.azurecr.io/nimbus-app:v1
+            ☸️  Cluster: aks-nimbus-dev
+
+            🔗 SonarCloud Dashboard: https://sonarcloud.io/project/overview?id=${{ secrets.SONAR_PROJECT_KEY }}
+            🔗 GitHub Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

@@ -1,3 +1,10 @@
+
+
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
 terraform.tfstate
 .terraform*
 dist/
@@ -13,3 +20,35 @@ node_modules/
 *.tfvars.local
 **/.env
 **/.env.local
+**/*.tfvars.local
+secrets.yml
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.iml
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+coverage/
+.nyc_output/
+reports/
+test-results/
+.cypress/
+
+# OS generated files
+ehthumbs.db
+Desktop.ini 
+$RECYCLE.BIN/
+
+#argoCD
+argocd/*.md
